@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put } from "@nestjs/common";
+import { Body, Controller, Delete, Get, NotFoundException, Param, ParseIntPipe, Patch, Post, Put } from "@nestjs/common";
 import { CreateUserDTO } from "./dto/create-user.dto";
 import { UpdateUserDTO } from "./dto/update-put-user.dto";
 import { UpdatePatchUserDTO } from "./dto/update-path-user.dto";
@@ -26,18 +26,25 @@ export class UserController {
 
   @Put(':id')
   async update(@Body() body: UpdateUserDTO, @Param('id', ParseIntPipe) id) {
+    await this.exists(id)
     return this.userService.update(id, body)
   }
 
   @Patch(':id')
   async updatePatial(@Body() body: UpdatePatchUserDTO, @Param('id', ParseIntPipe) id) {
+    await this.exists(id)
     return this.userService.updatePartial(id, body)
   }
 
   @Delete(':id')
   async delete(@Param('id', ParseIntPipe) id) {
-    return {
-      id
+    await this.exists(id)
+    return this.userService.delete(id)
+  }
+
+  async exists(id: number) {
+    if(!(await this.show(id))){
+      throw new NotFoundException(`O usuário ${id} não existe.`)
     }
   }
 }
