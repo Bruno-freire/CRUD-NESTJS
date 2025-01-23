@@ -2,6 +2,9 @@ import {
   BadRequestException,
   Body,
   Controller,
+  FileTypeValidator,
+  MaxFileSizeValidator,
+  ParseFilePipe,
   Post,
   UploadedFile,
   UploadedFiles,
@@ -12,7 +15,6 @@ import { AuthLoginDTO } from './dto/auth-login.dto';
 import { AuthRegisterDTO } from './dto/auth-register.dto';
 import { AuthForgetDTO } from './dto/auth-forget.dto';
 import { AuthResetDTO } from './dto/auth-reset.dto';
-import { UserService } from 'src/user/user.service';
 import { AuthService } from './auth.service';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { User } from 'src/decorators/user.decorator';
@@ -60,7 +62,18 @@ export class AuthController {
   @UseInterceptors(FileInterceptor('file'))
   @UseGuards(AuthGuard)
   @Post('photo')
-  async uploadPhoto(@User() user, @UploadedFile() photo: Express.Multer.File) {
+  async uploadPhoto(
+    @User() user,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new FileTypeValidator({fileType: 'image/jpeg'}),
+          new MaxFileSizeValidator({maxSize: 1024 * 50})
+        ],
+      }),
+    )
+    photo: Express.Multer.File,
+  ) {
     const path = join(
       __dirname,
       '..',
@@ -94,17 +107,19 @@ export class AuthController {
       {
         name: 'photos',
         maxCount: 1,
-      }, {
+      },
+      {
         name: 'documents',
-        maxCount: 10
-      }
+        maxCount: 10,
+      },
     ]),
   )
   @UseGuards(AuthGuard)
   @Post('files-fields')
   async uploadFilesFields(
     @User() user,
-    @UploadedFiles() files: {photo: Express.Multer.File, documents: Express.Multer.File[]},
+    @UploadedFiles()
+    files: { photo: Express.Multer.File; documents: Express.Multer.File[] },
   ) {
     return files;
   }
