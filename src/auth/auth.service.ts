@@ -9,6 +9,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthRegisterDTO } from './dto/auth-register.dto';
 import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcrypt';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,7 @@ export class AuthService {
     private readonly JWTservice: JwtService,
     private readonly prisma: PrismaService,
     private readonly userService: UserService,
+    private readonly mailer: MailerService,
   ) {}
 
   createToken(user: User) {
@@ -86,22 +88,59 @@ export class AuthService {
       throw new UnauthorizedException('E-mail está incorreto.');
     }
 
-    // TO DO: Enviar o email...
+    const token = this.JWTservice.sign(
+      {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      },
+      {
+        expiresIn: '30 minutes',
+        subject: String(user.id),
+        issuer: 'forget',
+        audience: 'users',
+      },
+    );
+
+    await this.mailer.sendMail({
+      subject: 'Recuperação de email',
+      to: 'joao@hcode.com.br',
+      template: '../templates/forget.pug',
+      context: {
+        name: user.name,
+        token,
+      },
+    });
 
     return true;
   }
 
   async reset(password: string, token: string) {
-    // TO DO: Validar o token...
-    const id = 0;
-    const user = await this.prisma.user.update({
-      where: { id },
-      data: {
-        password,
-      },
-    });
+    try {
+      const data = this.JWTservice.verify(token, {
+        issuer: 'forget',
+        audience: 'users',
+      });
 
-    return this.createToken(user);
+      if(isNaN(Number(data.id))){
+        throw new BadRequestException("Token inválido")
+      }
+
+      password = await bcrypt.hash(password, await bcrypt.genSalt())
+
+      const user = await this.prisma.user.update({
+        where: {
+          id: Number(data.id)
+        },
+        data: {
+          password,
+        },
+      });
+
+      return this.createToken(user);
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 
   async register(data: AuthRegisterDTO) {
