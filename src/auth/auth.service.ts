@@ -8,6 +8,9 @@ import { AuthRegisterDTO } from './dto/auth-register.dto';
 import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcrypt';
 import { MailerService } from '@nestjs-modules/mailer';
+import { InjectRepository } from '@nestjs/typeorm';
+import { UserEntity } from 'src/user/entity/user-entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class AuthService {
@@ -18,9 +21,11 @@ export class AuthService {
     private readonly JWTservice: JwtService,
     private readonly userService: UserService,
     private readonly mailer: MailerService,
+    @InjectRepository(UserEntity)
+    private readonly usersRepository: Repository<UserEntity>,
   ) {}
 
-  createToken(user: User) {
+  createToken(user: UserEntity) {
     return {
       accessToken: this.JWTservice.sign(
         {
@@ -59,10 +64,8 @@ export class AuthService {
   }
 
   async login(email: string, password: string) {
-    const user = await this.prisma.user.findFirst({
-      where: {
-        email,
-      },
+    const user = await this.usersRepository.findOneBy({
+      email,
     });
     if (!user) {
       throw new UnauthorizedException('E-mail e/ou senha incorretos.');
@@ -76,10 +79,8 @@ export class AuthService {
   }
 
   async forget(email: string) {
-    const user = await this.prisma.user.findFirst({
-      where: {
-        email,
-      },
+    const user = await this.usersRepository.findOneBy({
+      email,
     });
     if (!user) {
       throw new UnauthorizedException('E-mail está incorreto.');
@@ -119,22 +120,16 @@ export class AuthService {
         audience: 'users',
       });
 
-      if(isNaN(Number(data.id))){
-        throw new BadRequestException("Token inválido")
+      if (isNaN(Number(data.id))) {
+        throw new BadRequestException('Token inválido');
       }
 
-      password = await bcrypt.hash(password, await bcrypt.genSalt())
+      password = await bcrypt.hash(password, await bcrypt.genSalt());
 
-      const user = await this.prisma.user.update({
-        where: {
-          id: Number(data.id)
-        },
-        data: {
-          password,
-        },
-      });
+      await this.usersRepository.update(Number(data.id), {password});
 
-      return "Suceccess";
+      const user = await this.userService.show(data.id)
+      return this.createToken(user);
     } catch (error) {
       throw new BadRequestException(error);
     }

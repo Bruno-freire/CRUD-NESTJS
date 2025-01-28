@@ -9,6 +9,7 @@ import { ConfigModule } from '@nestjs/config';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserEntity } from './user/entity/user-entity';
 
 @Module({
   imports: [
@@ -21,8 +22,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         host: 'smtp.ethereal.email',
         port: 587,
         auth: {
-          user: 'melissa.koepp@ethereal.email',
-          pass: 'nH1VtKXxvsM5UJGB65',
+          user: 'anita.schinner@ethereal.email',
+          pass: 'YuT6zVQeH5efaRFprq',
         },
       },
       defaults: {
@@ -37,15 +38,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       },
     }),
     TypeOrmModule.forRoot({
-      type: "mysql",
+      type: 'mysql',
       host: process.env.DB_HOST,
       port: Number(process.env.DB_PORT),
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
-      entities: [],
-      synchronize: process.env.ENV === "production" ? false : true
-    })
+      entities: [UserEntity],
+      synchronize: process.env.ENV === 'production' ? false : true,
+    }),
   ],
   controllers: [AppController],
   providers: [
