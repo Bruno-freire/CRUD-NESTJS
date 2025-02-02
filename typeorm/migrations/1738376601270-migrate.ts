@@ -1,26 +1,62 @@
 import { MigrationInterface, QueryRunner, Table } from "typeorm";
 
 export class Migrate1738376601270 implements MigrationInterface {
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.createTable(
+      new Table({
+        name: "users",
+        columns: [
+          {
+            name: "id",
+            type: "int",
+            isPrimary: true,
+            isGenerated: true,
+            generationStrategy: "increment",
+            unsigned: true,
+          },
+          {
+            name: "name",
+            type: "varchar",
+            length: "63",
+          },
+          {
+            name: "email",
+            type: "varchar",
+            length: "127",
+          },
+          {
+            name: "password",
+            type: "varchar",
+            length: "127",
+          },
+          {
+            name: "birthAt",
+            type: "date",
+            isNullable: true
+          },
+          {
+            name: "role",
+            type: "enum",
+            enum: ["1", "2"],
+            default: "'1'",
+          },
+          {
+            name: "createdAt",
+            type: "timestamp",
+            default: "CURRENT_TIMESTAMP()",
+          },
+          {
+            name: "updatedAt",
+            type: "timestamp",
+            default: "CURRENT_TIMESTAMP()",
+            onUpdate: "CURRENT_TIMESTAMP()",
+          }
+        ],
+      })
+    );
+  }
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.createTable(new Table({
-            name: 'users',
-            columns: [{
-                name: "id",
-                type: 'int',
-                isPrimary: true,
-                isGenerated: true,
-                generationStrategy: "increment",
-                unsigned: true
-            }, {
-                name: "name",
-                type: "varchar",
-                length: "63"
-            }]
-        }));
-    }
-
-    public async down(queryRunner: QueryRunner): Promise<void> {
-    }
-
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.dropTable("users");
+  }
 }
