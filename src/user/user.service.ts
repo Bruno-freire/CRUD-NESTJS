@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreateUserDTO } from './dto/create-user.dto';
-import { UpdateUserDTO } from './dto/update-put-user.dto';
+import { UpdatePutUserDTO } from './dto/update-put-user.dto';
 import { UpdatePatchUserDTO } from './dto/update-path-user.dto';
 import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
@@ -19,7 +19,7 @@ export class UserService {
   ) {}
 
   async create({ email, name, password }: CreateUserDTO) {
-    if (await this.usersRepository.exists({ where: { email } })) {
+    if (await this.usersRepository.exist({ where: { email } })) {
       throw new BadRequestException('Esté email já está em uso');
     }
     password = await bcrypt.hash(password, await bcrypt.genSalt());
@@ -35,7 +35,7 @@ export class UserService {
   }
 
   async show(id: number) {
-    await this.exists(id);
+    await this.exist(id);
     return this.usersRepository.findOne({
       where: { id },
     });
@@ -43,9 +43,9 @@ export class UserService {
 
   async update(
     id: number,
-    { email, name, password, birthAt, role }: UpdateUserDTO,
+    { email, name, password, birthAt, role }: UpdatePutUserDTO,
   ) {
-    await this.exists(id);
+    await this.exist(id);
     password = await bcrypt.hash(password, await bcrypt.genSalt());
     await this.usersRepository.update(Number(id), {
       email,
@@ -61,7 +61,7 @@ export class UserService {
     id: number,
     { email, name, password, birthAt, role }: UpdatePatchUserDTO,
   ) {
-    await this.exists(id);
+    await this.exist(id);
     const data: any = {};
 
     if (birthAt) {
@@ -87,13 +87,15 @@ export class UserService {
   }
 
   async delete(id: number) {
-    await this.exists(id);
-    return this.usersRepository.delete(id);
+    await this.exist(id);
+    await this.usersRepository.delete(id);
+
+    return true
   }
 
-  async exists(id: number) {
+  async exist(id: number) {
     if (
-      !(await this.usersRepository.exists({
+      !(await this.usersRepository.exist({
         where: {
           id,
         },
