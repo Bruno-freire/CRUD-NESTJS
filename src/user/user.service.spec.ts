@@ -1,15 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from './user.service';
-import { usersRepositoryMock } from '../testing/user-repository.mock';
-import { CreateUserDTO } from './dto/create-user.dto';
-import { Role } from '../enums/role.enum';
+import { usersRepositoryMock } from '../testing/mocks/user-repository.mock';
 import { UserEntity } from './entity/user-entity';
-import { userEntityList } from '../testing/user-entity-list-mock';
-import { createUserDTO } from '../testing/create-user-dto.mock';
+import { userEntityList } from '../testing/userServiceTest/user-entity-list-mock';
+import { createUserDTO } from '../testing/userServiceTest/create-user-dto.mock';
 import { Repository } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { updatePutUserDTO } from '../testing/update-put-user-dto.mock';
-import { updatePatchUserDTO } from '../testing/update-patch-user-dto.mock';
+import { updatePutUserDTO } from '../testing/userServiceTest/update-put-user-dto.mock';
+import { updatePatchUserDTO } from '../testing/userServiceTest/update-patch-user-dto.mock';
 
 describe('UserService', () => {
   let userService: UserService;
@@ -31,7 +29,7 @@ describe('UserService', () => {
 
   describe('Create', () => {
     it('method create', async () => {
-      jest.spyOn(userRepository, 'exist').mockResolvedValueOnce(false);
+      jest.spyOn(userRepository, 'exists').mockResolvedValueOnce(false);
 
       const result = await userService.create(createUserDTO);
 

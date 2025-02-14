@@ -19,7 +19,7 @@ export class UserService {
   ) {}
 
   async create({ email, name, password }: CreateUserDTO) {
-    if (await this.usersRepository.exist({ where: { email } })) {
+    if (await this.usersRepository.exists({ where: { email } })) {
       throw new BadRequestException('Esté email já está em uso');
     }
     password = await bcrypt.hash(password, await bcrypt.genSalt());
@@ -35,7 +35,7 @@ export class UserService {
   }
 
   async show(id: number) {
-    await this.exist(id);
+    await this.exists(id);
     return this.usersRepository.findOne({
       where: { id },
     });
@@ -45,7 +45,7 @@ export class UserService {
     id: number,
     { email, name, password, birthAt, role }: UpdatePutUserDTO,
   ) {
-    await this.exist(id);
+    await this.exists(id);
     password = await bcrypt.hash(password, await bcrypt.genSalt());
     await this.usersRepository.update(Number(id), {
       email,
@@ -61,7 +61,7 @@ export class UserService {
     id: number,
     { email, name, password, birthAt, role }: UpdatePatchUserDTO,
   ) {
-    await this.exist(id);
+    await this.exists(id);
     const data: any = {};
 
     if (birthAt) {
@@ -87,21 +87,21 @@ export class UserService {
   }
 
   async delete(id: number) {
-    await this.exist(id);
+    await this.exists(id);
     await this.usersRepository.delete(id);
 
     return true
   }
 
-  async exist(id: number) {
+  async exists(id: number) {
     if (
-      !(await this.usersRepository.exist({
+      !(await this.usersRepository.exists({
         where: {
           id,
         },
       }))
     ) {
-      throw new NotFoundException(`O usuário ${id} não existe.`);
+      throw new NotFoundException(`O usuário ${id} não existse.`);
     }
   }
 }
